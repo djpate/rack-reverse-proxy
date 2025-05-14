@@ -152,7 +152,11 @@ module RackReverseProxy
     end
 
     def response_headers
-      @_response_headers ||= build_response_headers
+      @_response_headers ||= begin
+        headers = build_response_headers
+        headers = headers.transform_keys(&:downcase)
+        headers
+      end
     end
 
     def build_response_headers
@@ -163,11 +167,8 @@ module RackReverseProxy
     end
 
     def rack_response_headers
-      Rack::Headers.new(
-        Rack::Proxy.normalize_headers(
-          format_headers(target_response.headers)
-        )
-      )
+      headers = Rack::Proxy.normalize_headers(format_headers(target_response.headers))
+      Rack::Headers.new.merge(headers)
     end
 
     def replace_location_header
